@@ -89,6 +89,8 @@ SIOCSIFADDR = 0x8916
 SIOCGIFNETMASK = 0x891B
 SIOCSIFNETMASK = 0x891C
 SIOCETHTOOL = 0x8946
+SIOCGIFMTU = 0x8921
+SIOCSIFMTU = 0x8922
 
 # From linux/if.h
 IFF_UP       = 0x1
@@ -175,6 +177,28 @@ class Interface(object):
             return True
         else:
             return False
+
+    def get_mtu(self):
+        '''Use socket ioctl call to get MTU size'''
+        s = socket.socket(type=socket.SOCK_DGRAM)
+        ifr = self.name + b'\x00'*(32-len(self.name))
+        try:
+            ifs = fcntl.ioctl(s, SIOCGIFMTU, ifr)
+            mtu = struct.unpack('<H',ifs[16:18])[0]
+        except:
+            raise
+        return mtu
+
+    def set_mtu(self, mtu):
+        '''Use socket ioctl call to set MTU size'''
+        s = socket.socket(type=socket.SOCK_DGRAM)
+        ifr = struct.pack('<16sH', self.name, mtu) + b'\x00'*14
+        try:
+            ifs = fcntl.ioctl(s, SIOCSIFMTU, ifr)
+            mtu = struct.unpack('<H',ifs[16:18])[0]
+        except:
+            raise
+        return mtu
 
     def get_mac(self):
         ''' Obtain the device's mac address. '''
